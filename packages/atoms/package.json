@@ -1,0 +1,27 @@
+{
+  "name": "@intellisencss/atoms",
+  "version": "0.0.1",
+  "description": "> TODO: description",
+  "author": "Jesse Carter <jesse.r.carter@gmail.com>",
+  "homepage": "https://github.com/Intellisencss/intellisencss#readme",
+  "license": "ISC",
+  "main": "dist/index",
+  "typings": "dist/index",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Intellisencss/intellisencss.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/Intellisencss/intellisencss/issues"
+  }
+}

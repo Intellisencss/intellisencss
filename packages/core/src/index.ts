@@ -1,0 +1,3 @@
+interface StylePropConfig {}
+
+const createStyleFunc = () => {};

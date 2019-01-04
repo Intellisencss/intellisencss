@@ -1,0 +1,12 @@
+{
+  "name": "@intellisencss/core",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "react": "^16.7.0"
+  }
+}

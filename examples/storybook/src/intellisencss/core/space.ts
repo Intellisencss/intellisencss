@@ -1,10 +1,6 @@
-import {
-  makeThemedAugmentation,
-  ResponsiveProps,
-  ThemedStyleGetter
-} from './utility';
+import { makeThemedAugmentation, ResponsiveProps, ThemedStyleGetter } from './utility';
 
-interface SpaceAugmentationProps {
+export interface SpaceAugmentationProps {
   m: ResponsiveProps;
   mt: ResponsiveProps;
   mr: ResponsiveProps;
@@ -15,7 +11,7 @@ interface SpaceAugmentationProps {
 }
 
 interface SpaceAugmentationThemeProps {
-  spaces: (string | number)[];
+  spacing: (string | number)[];
 }
 
 // const spaceStyleGetter: ThemedStyleGetter<SpaceThemeProps> = (prop, theme) =>
@@ -43,7 +39,7 @@ const makeSpaceStyleGetter: (
     // Check to see if this exists in the spaces array
     // otherwise assume they meant pixels
 
-    const space = theme.spaces[propVal] || `${propVal}px`;
+    const space = theme.spacing[propVal] || `${propVal}px`;
 
     // If this is still a number assume that the unit is pixels
     // TODO: Maybe pass in the fallback unit as config so rem, em etc can be done

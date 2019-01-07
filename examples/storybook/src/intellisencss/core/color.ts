@@ -1,10 +1,6 @@
-import {
-  makeStyleGetter,
-  makeThemedAugmentation,
-  ResponsiveProps
-} from './utility';
+import { makeStyleGetter, makeThemedAugmentation, ResponsiveProps } from './utility';
 
-interface ColorAugmentationProps {
+export interface ColorAugmentationProps {
   color: ResponsiveProps;
   bg: ResponsiveProps;
 }

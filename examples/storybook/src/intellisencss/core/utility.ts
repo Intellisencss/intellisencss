@@ -1,36 +1,35 @@
-import { camel } from 'change-case';
 import { get } from 'lodash';
 import styled, { StyledComponent } from 'styled-components';
 
 export type ResponsiveProps = string | number | (string | number)[];
 
-interface StyleConfig<T> {
-  cssName: string;
-  propKeys: string[];
-  propKey: keyof T;
-}
+// interface StyleConfig<T> {
+//   cssName: string;
+//   propKeys: string[];
+//   propKey: keyof T;
+// }
 
-const propsCase = (text: string) => camel(text);
+// const propsCase = (text: string) => camel(text);
 
-export const makeStyleFunc = <T extends {}>(config: StyleConfig<T>) => (
-  props: any
-) => {
-  const stylePropsKey = config.propKey || propsCase(config.cssName);
+// export const makeStyleFunc = <T extends {}>(config: StyleConfig<T>) => (
+//   props: any
+// ) => {
+//   const stylePropsKey = config.propKey || propsCase(config.cssName);
 
-  return props[stylePropsKey]
-    ? `${config.cssName}: ${props[stylePropsKey]}`
-    : null;
-};
+//   return props[stylePropsKey]
+//     ? `${config.cssName}: ${props[stylePropsKey]}`
+//     : null;
+// };
 
 export type Themed<T> = { theme: T };
 
 export type ThemedStyleAugmentationFn<P, T> = (
-  allProps: P & Themed<T>
+  allProps: Partial<P> & Themed<T>
 ) => string;
 
 export function augmentComponent<
   P,
-  TA,
+  TA extends T,
   C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
   T extends object,
   O extends object = {},
@@ -38,12 +37,63 @@ export function augmentComponent<
 >(
   styledComponent: StyledComponent<C, T, O, A>,
   styleAugmentation: ThemedStyleAugmentationFn<P, TA>
-): StyledComponent<C, T & TA, O & Partial<P>, A> {
+): StyledComponent<C, T, O & Partial<P>, A> {
   const augmented = styled(styledComponent)`
     ${styleAugmentation}
   `;
 
   return augmented as StyledComponent<C, T, O & Partial<P>, A>;
+}
+
+export function multiAugment<
+  P1 extends {},
+  TA1 extends T,
+  P2 extends {},
+  TA2 extends T,
+  C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
+  T extends object,
+  O extends object = {},
+  A extends keyof any = never
+>(
+  styledComponent: StyledComponent<C, T, O, A>,
+  styleAugmentations: [ThemedStyleAugmentationFn<P1, TA1>, ThemedStyleAugmentationFn<P2, TA2>]
+): StyledComponent<C, T, O & Partial<P1 & P2>, A> {
+  const augmented = styled(styledComponent)`
+    ${styleAugmentations}
+  `;
+
+  return augmented as StyledComponent<C, T, O & Partial<P1 & P2>, A>;
+}
+
+type InferredPropsObject<T> = T extends infer U ? U : never; 
+
+// type InferredTest = InferredPropsObject<ColorAugmentationProps>
+
+export function multiAugment2<
+  P extends {},
+  TA extends T,
+  U extends ThemedStyleAugmentationFn<InferredPropsObject<P>, TA>[],
+  //X extends ThemedStyleAugmentationFn<InferredPropsObject<P>, TA>,
+
+
+
+  C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
+  T extends object,
+  O extends object = {},
+  A extends keyof any = never
+>(
+  styledComponent: StyledComponent<C, T, O, A>,
+  ...styleAugmentations: U
+): StyledComponent<C, T, O & Partial<P>, A> {
+  const augmented = styled(styledComponent)`
+    ${styleAugmentations}
+  `;
+
+  return augmented as StyledComponent<C, T, O & Partial<P>, A>;
+}
+
+export function multiAug3<C extends keyof JSX.IntrinsicElements | React.ComponentType<any>, T extends {}, O extends {}, A extends keyof any = never>(styleComponent: StyledComponent<C, T, O, A>, styleaugmentations: (() => string)[]) {
+  return styleaugmentations.reduce((acc: StyledComponent<C, T, O , A>, val) => augmentComponent(acc, val), styleComponent);
 }
 
 export type AugmentationConfig<P, T> = { [K in keyof P]: PropConfig<T> };
@@ -93,37 +143,9 @@ export function makeStyleGetter<T>(
       return '';
     }
 
-    console.log(subTheme);
     const themeValue = get(subTheme, p);
     const result = themeValue ? `${cssKey}: ${themeValue}` : `${cssKey}: ${p}`;
-    console.log(result);
+    
     return result;
   };
 }
-
-// const mapped = [['mb', 'margin-bottom'], ['mb', 'margin-bottom']];
-
-// const mappedThing: AugmentationConfig<SpaceProps, any> = mapped.reduce(
-//   (a, b) => {
-//     return {
-//       ...a,
-//       [b[0]]: {
-//         getStyle: (p: any, t: any) => `${b[1]}: ${p}`
-//       }
-//     };
-//   },
-//   {}
-// );
-
-// const spaceStyleGetter: ThemedStyleGetter<SpaceThemeProps> = (
-//   propValue,
-//   theme
-// ) => {};
-
-// const spaceAugmentation = makeThemedAugmentation<SpaceProps, SpaceThemeProps>({
-//   mt: {
-//     getStyle: () => {}
-//   }
-// });
-
-// console.log(mappedThing);

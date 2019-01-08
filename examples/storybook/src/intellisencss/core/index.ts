@@ -1,4 +1,9 @@
 export { colorAugmentation } from './color';
+export { fontFamilyAugmentation } from './fontFamily';
+export { fontSizeAugmentation } from './fontSize';
 export { spaceAugmentation } from './space';
-export { augmentComponent, makeStyleGetter, makeThemedAugmentation } from './utility';
-
+export {
+  augmentComponent,
+  makeResponsiveStyleGetter,
+  makeThemedAugmentation
+} from './utility';

@@ -1,25 +1,30 @@
-import { makeStyleGetter, makeThemedAugmentation, ResponsiveProps } from './utility';
+import {
+  makeResponsiveStyleGetter,
+  makeThemedAugmentation,
+  ResponsiveProps,
+  ResponsiveTheme
+} from './utility';
 
 export interface ColorAugmentationProps {
+  /** this dictates what the button will say  */
   color: ResponsiveProps;
   bg: ResponsiveProps;
 }
 
-interface ColorAugmentationThemeProps {
+interface ColorAugmentationThemeProps extends ResponsiveTheme {
   colors: { [key: string]: string | string[] };
 }
 
 const colorGetter = (cssKey: string) =>
-  makeStyleGetter<ColorAugmentationThemeProps>(cssKey, ({ colors }) => colors);
+  makeResponsiveStyleGetter<ColorAugmentationThemeProps>(
+    ({ colors }) => colors,
+    cssKey
+  );
 
 export const colorAugmentation = makeThemedAugmentation<
   ColorAugmentationProps,
   ColorAugmentationThemeProps
 >({
-  bg: {
-    getStyle: colorGetter('background-color')
-  },
-  color: {
-    getStyle: colorGetter('color')
-  }
+  bg: colorGetter('background-color'),
+  color: colorGetter('color')
 });

@@ -1,25 +1,8 @@
+import { paramCase } from 'change-case';
 import { get } from 'lodash';
 import styled, { StyledComponent } from 'styled-components';
 
 export type ResponsiveProps = string | number | (string | number)[];
-
-// interface StyleConfig<T> {
-//   cssName: string;
-//   propKeys: string[];
-//   propKey: keyof T;
-// }
-
-// const propsCase = (text: string) => camel(text);
-
-// export const makeStyleFunc = <T extends {}>(config: StyleConfig<T>) => (
-//   props: any
-// ) => {
-//   const stylePropsKey = config.propKey || propsCase(config.cssName);
-
-//   return props[stylePropsKey]
-//     ? `${config.cssName}: ${props[stylePropsKey]}`
-//     : null;
-// };
 
 export type Themed<T> = { theme: T };
 
@@ -45,68 +28,13 @@ export function augmentComponent<
   return augmented as StyledComponent<C, T, O & Partial<P>, A>;
 }
 
-export function multiAugment<
-  P1 extends {},
-  TA1 extends T,
-  P2 extends {},
-  TA2 extends T,
-  C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
-  T extends object,
-  O extends object = {},
-  A extends keyof any = never
->(
-  styledComponent: StyledComponent<C, T, O, A>,
-  styleAugmentations: [ThemedStyleAugmentationFn<P1, TA1>, ThemedStyleAugmentationFn<P2, TA2>]
-): StyledComponent<C, T, O & Partial<P1 & P2>, A> {
-  const augmented = styled(styledComponent)`
-    ${styleAugmentations}
-  `;
-
-  return augmented as StyledComponent<C, T, O & Partial<P1 & P2>, A>;
-}
-
-type InferredPropsObject<T> = T extends infer U ? U : never; 
-
-// type InferredTest = InferredPropsObject<ColorAugmentationProps>
-
-export function multiAugment2<
-  P extends {},
-  TA extends T,
-  U extends ThemedStyleAugmentationFn<InferredPropsObject<P>, TA>[],
-  //X extends ThemedStyleAugmentationFn<InferredPropsObject<P>, TA>,
-
-
-
-  C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
-  T extends object,
-  O extends object = {},
-  A extends keyof any = never
->(
-  styledComponent: StyledComponent<C, T, O, A>,
-  ...styleAugmentations: U
-): StyledComponent<C, T, O & Partial<P>, A> {
-  const augmented = styled(styledComponent)`
-    ${styleAugmentations}
-  `;
-
-  return augmented as StyledComponent<C, T, O & Partial<P>, A>;
-}
-
-export function multiAug3<C extends keyof JSX.IntrinsicElements | React.ComponentType<any>, T extends {}, O extends {}, A extends keyof any = never>(styleComponent: StyledComponent<C, T, O, A>, styleaugmentations: (() => string)[]) {
-  return styleaugmentations.reduce((acc: StyledComponent<C, T, O , A>, val) => augmentComponent(acc, val), styleComponent);
-}
-
-export type AugmentationConfig<P, T> = { [K in keyof P]: PropConfig<T> };
+export type AugmentationConfig<P, T> = { [K in keyof P]: ThemedStyleGetter<T> };
 
 export type ThemedStyleGetter<T> = (
+  key: string,
   propVal: ResponsiveProps,
   theme: T
 ) => string;
-
-export interface PropConfig<T> {
-  transformFn?: () => string;
-  getStyle: ThemedStyleGetter<T>;
-}
 
 export function makeThemedAugmentation<P, T>(
   config: AugmentationConfig<P, T>
@@ -121,10 +49,10 @@ export function makeThemedAugmentation<P, T>(
     );
 
     const applied = propsWithValues.reduce((acc, key) => {
-      const propConfig: PropConfig<T> = config[key];
+      const themeStyleGetter: ThemedStyleGetter<T> = config[key];
 
       return `${acc}
-        ${propConfig.getStyle(props[key], props.theme)}
+        ${themeStyleGetter(key, props[key], props.theme)}
       `;
     }, '');
 
@@ -132,20 +60,73 @@ export function makeThemedAugmentation<P, T>(
   };
 }
 
-export function makeStyleGetter<T>(
-  cssKey: string,
-  themeSelector: (theme: { [key: string]: T }) => T
+export function makeResponsiveStyleGetter<
+  T extends { breakpoints: (string | number)[] }
+>(
+  themeSelector: (theme: { [key: string]: T }) => T = ({ theme }) => theme,
+  cssKey: string | undefined = undefined
 ): ThemedStyleGetter<T> {
-  return (p, t) => {
-    const subTheme = themeSelector(t as any);
+  return (propKey, propVal, theme) => {
+    if (!propVal) {
+      return ``;
+    }
 
-    if (Array.isArray(p)) {
+    const cssTarget = cssKey || paramCase(propKey);
+    const themeSlice = themeSelector(theme as any);
+
+    if (Array.isArray(propVal)) {
       return '';
     }
 
-    const themeValue = get(subTheme, p);
-    const result = themeValue ? `${cssKey}: ${themeValue}` : `${cssKey}: ${p}`;
-    
+    const themeValue = get(themeSlice, propVal);
+    const result = themeValue
+      ? `${cssTarget}: ${themeValue}`
+      : `${cssTarget}: ${fallbackToPx(propVal)}`;
+
     return result;
   };
 }
+
+export interface ResponsiveTheme {
+  breakpoints: (string | number)[];
+}
+
+type PfromSA<SA extends Array<ThemedStyleAugmentationFn<any, any>>> = {
+  [K in keyof SA]: SA[K] extends ThemedStyleAugmentationFn<infer P, any>
+    ? (x: P) => void
+    : never
+} extends { [k: number]: (x: infer P) => void }
+  ? P
+  : never;
+
+type SAExtendsTProperly<
+  SA extends Array<ThemedStyleAugmentationFn<any, any>>,
+  T
+> = {
+  [K in keyof SA]: SA[K] extends ThemedStyleAugmentationFn<any, infer U>
+    ? [U] extends [T]
+      ? SA[K]
+      : ThemedStyleAugmentationFn<any, T>
+    : never
+};
+
+export function multiAugmentComponent<
+  SA extends Array<ThemedStyleAugmentationFn<any, any>>,
+  C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
+  T extends object,
+  O extends object = {},
+  A extends keyof any = never
+>(
+  styledComponent: StyledComponent<C, T, O, A>,
+  ...styleAugmentations: SA & SAExtendsTProperly<SA, T>
+): StyledComponent<C, T, O & Partial<PfromSA<SA>>, A> {
+  const augmented = styled(styledComponent)`
+    ${styleAugmentations}
+  `;
+
+  return augmented as StyledComponent<C, T, O & Partial<PfromSA<SA>>, A>;
+}
+
+export const fallbackToPx = (n: string | number) => (Number(n) ? n + 'px' : n);
+export const createMediaQuery = (n: string | number) =>
+  `@media screen and (min-width: ${fallbackToPx(n)})`;

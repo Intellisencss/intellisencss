@@ -1,4 +1,10 @@
-import { makeThemedAugmentation, ResponsiveProps, ThemedStyleGetter } from './utility';
+import { get } from 'lodash';
+import {
+  makeThemedAugmentation,
+  ResponsiveProps,
+  ResponsiveTheme,
+  ThemedStyleGetter
+} from './utility';
 
 export interface SpaceAugmentationProps {
   m: ResponsiveProps;
@@ -8,14 +14,18 @@ export interface SpaceAugmentationProps {
   ml: ResponsiveProps;
   mx: ResponsiveProps;
   my: ResponsiveProps;
+  p: ResponsiveProps;
+  pt: ResponsiveProps;
+  pr: ResponsiveProps;
+  pb: ResponsiveProps;
+  pl: ResponsiveProps;
+  px: ResponsiveProps;
+  py: ResponsiveProps;
 }
 
-interface SpaceAugmentationThemeProps {
-  spacing: (string | number)[];
+interface SpaceAugmentationThemeProps extends ResponsiveTheme {
+  space: (string | number)[];
 }
-
-// const spaceStyleGetter: ThemedStyleGetter<SpaceThemeProps> = (prop, theme) =>
-//   '';
 
 const applySpace = (cssKeys: string[], space: string) =>
   cssKeys.reduce((acc, key) => {
@@ -27,53 +37,49 @@ const applySpace = (cssKeys: string[], space: string) =>
 const makeSpaceStyleGetter: (
   ...keys: string[]
 ) => ThemedStyleGetter<SpaceAugmentationThemeProps> = (...cssKeys) => (
+  key,
   propVal,
   theme
 ) => {
+  if (!propVal) {
+    return '';
+  }
+
   if (Array.isArray(propVal)) {
     // TODO: this needs to be responsive
     return '';
   }
 
-  if (typeof propVal === 'number') {
-    // Check to see if this exists in the spaces array
-    // otherwise assume they meant pixels
+  const themeValue = get(theme.space, propVal);
 
-    const space = theme.spacing[propVal] || `${propVal}px`;
+  const actualValue =
+    themeValue != null
+      ? Number(themeValue)
+        ? `${themeValue}px`
+        : themeValue
+      : Number(propVal)
+      ? `${propVal}px`
+      : (propVal as string);
 
-    // If this is still a number assume that the unit is pixels
-    // TODO: Maybe pass in the fallback unit as config so rem, em etc can be done
-    const finalSpace = typeof space === 'number' ? `${space}px` : space;
-
-    return applySpace(cssKeys, finalSpace);
-  }
-
-  return '';
+  return applySpace(cssKeys, actualValue);
 };
 
 export const spaceAugmentation = makeThemedAugmentation<
   SpaceAugmentationProps,
   SpaceAugmentationThemeProps
 >({
-  m: {
-    getStyle: makeSpaceStyleGetter('margin')
-  },
-  mt: {
-    getStyle: makeSpaceStyleGetter('margin-top')
-  },
-  mr: {
-    getStyle: makeSpaceStyleGetter('margin-right')
-  },
-  mb: {
-    getStyle: makeSpaceStyleGetter('margin-bottom')
-  },
-  ml: {
-    getStyle: makeSpaceStyleGetter('margin-left')
-  },
-  mx: {
-    getStyle: makeSpaceStyleGetter('margin-left', 'margin-right')
-  },
-  my: {
-    getStyle: makeSpaceStyleGetter('margin-top', 'margin-bottom')
-  }
+  m: makeSpaceStyleGetter('margin'),
+  mt: makeSpaceStyleGetter('margin-top'),
+  mr: makeSpaceStyleGetter('margin-right'),
+  mb: makeSpaceStyleGetter('margin-bottom'),
+  ml: makeSpaceStyleGetter('margin-left'),
+  mx: makeSpaceStyleGetter('margin-left', 'margin-right'),
+  my: makeSpaceStyleGetter('margin-top', 'margin-bottom'),
+  p: makeSpaceStyleGetter('padding'),
+  pt: makeSpaceStyleGetter('padding-top'),
+  pr: makeSpaceStyleGetter('padding-right'),
+  pb: makeSpaceStyleGetter('padding-bottom'),
+  pl: makeSpaceStyleGetter('padding-left'),
+  px: makeSpaceStyleGetter('padding-left', 'padding-right'),
+  py: makeSpaceStyleGetter('padding-top', 'padding-bottom')
 });

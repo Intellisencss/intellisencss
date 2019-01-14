@@ -2,15 +2,17 @@ import { object, text } from '@storybook/addon-knobs/react';
 import { storiesOf } from '@storybook/react';
 import * as React from 'react';
 import styled, { theme, ThemeProvider } from '../theme';
-import { wInfo } from '../utils';
 import {
   colorAugmentation,
   fontFamilyAugmentation,
   fontSizeAugmentation,
   spaceAugmentation
 } from './core';
-import { ColorAugmentationProps } from './core/color';
-import { augmentComponent, multiAugmentComponent } from './core/utility';
+import {
+  augmentComponent,
+  extendComponent,
+  multiAugmentComponent
+} from './core/utility';
 const First = styled('div')<{ jesse?: string }>`
   font-size: 42px;
 `;
@@ -27,12 +29,20 @@ const Fourth = multiAugmentComponent(
   fontFamilyAugmentation
 );
 
-const PropsTest = (props: ColorAugmentationProps) => (
-  <Fourth {...props as any} />
-);
+const Fifth = extendComponent(Fourth, {
+  bg: 'blue',
+  color: 'silver',
+  p: 2,
+  my: 3
+});
 
-(storiesOf('Intellisencss/Inception', module) as any)
-  .addWithJSX('Playground', () => (
+const Sixth = extendComponent(Fifth, {
+  fontFamily: 'sans'
+});
+
+(storiesOf('Intellisencss/Inception', module) as any).addWithJSX(
+  'Playground',
+  () => (
     <ThemeProvider theme={object('theme', theme)}>
       <div>
         <First>First</First>
@@ -52,14 +62,10 @@ const PropsTest = (props: ColorAugmentationProps) => (
         >
           Customized Component
         </Fourth>
+        <Fifth>Extended Component</Fifth>
+        <Fifth p="4">Extended Component Customized</Fifth>
+        <Sixth>Extended Extended</Sixth>
       </div>
     </ThemeProvider>
-  ))
-  .addWithJSX(
-    'And Another One',
-    wInfo(``)(() => (
-      <PropsTest color="blue" bg="black">
-        Something In Here
-      </PropsTest>
-    ))
-  );
+  )
+);

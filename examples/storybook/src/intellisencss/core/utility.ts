@@ -1,5 +1,6 @@
 import { paramCase } from 'change-case';
 import { get } from 'lodash';
+import * as React from 'react';
 import styled, { StyledComponent } from 'styled-components';
 
 export type ResponsiveProps = string | number | (string | number)[];
@@ -125,6 +126,24 @@ export function multiAugmentComponent<
   `;
 
   return augmented as StyledComponent<C, T, O & Partial<PfromSA<SA>>, A>;
+}
+
+export function extendComponent<
+  C extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
+  T extends object,
+  O extends object = {},
+  A extends keyof any = never
+>(component: StyledComponent<C, T, O, A>, defaults: Partial<O>) {
+  const extended = React.forwardRef((props, ref) => {
+    return React.createElement(component as any, { ...props, ref });
+  });
+
+  extended.defaultProps = {
+    ...(component.defaultProps as any),
+    ...defaults
+  };
+
+  return extended as StyledComponent<C, T, O, A>;
 }
 
 export const fallbackToPx = (n: string | number) => (Number(n) ? n + 'px' : n);
